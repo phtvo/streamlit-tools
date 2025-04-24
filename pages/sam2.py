@@ -75,6 +75,7 @@ def display():
       st.session_state.canvas_img = None
   if "fps" not in st.session_state:
       st.session_state.fps = 0
+  
 
   # ------------------- UPLOAD VIDEO ----------------------------
   uploaded_file = st.file_uploader("Upload a video", type=["mp4", "mov", "avi"])
@@ -96,6 +97,20 @@ def display():
       st.session_state.video_frames = frames
       st.session_state.frame_idx = 0
 
+  if st.button("Reset everything", type="primary"):
+      st.session_state.objects = []
+      st.session_state.frame_idx = 0
+      st.session_state.rendered_frame_idx = 0
+      st.session_state.video_frames = []
+      st.session_state.obj_id = 0
+      st.session_state.current_mode = "positive"
+      st.session_state.current_video = None
+      st.session_state.obj_to_color = {}
+      st.session_state.canvas_img = None
+      st.session_state.fps = 0
+      st.session_state.pop("tracked_frames")
+      uploaded_file = None
+  
   # ------------------- VIDEO CONTROLS --------------------------
   def get_obj_by_current_frame():
       outs = []
@@ -196,9 +211,11 @@ def display():
                       if [x, y] not in second_last_obj["points"]:
                           last_obj["points"].append([x, y])
                           last_obj["labels"].append(1 if st.session_state.current_mode == "positive" else 0)
+                          last_obj["frame_idx"] = st.session_state.frame_idx
                   else:
                       last_obj["points"].append([x, y])
                       last_obj["labels"].append(1 if st.session_state.current_mode == "positive" else 0)
+                      last_obj["frame_idx"] = st.session_state.frame_idx
 
       # Reset points
       if st.session_state.objects:
@@ -274,7 +291,7 @@ def display():
                       #for obj in st.session_state.objects:
                       _frame = render_mask(_frame, mask, color, 0.7)
                   st.session_state.fps = round((count + 1) / sum(total_track_time), 3)
-                  view_image.image(_frame, caption=f"Tracked Frame {count+1}. FPS = {st.session_state.fps} f/s", channels="RGB")
+                  view_image.image(_frame, caption=f"Tracked Frame {count+1}. FPS = {st.session_state.fps} f/s. Time = {round(sum(total_track_time), 3)} sec", channels="RGB")
                   st.session_state["tracked_frames"].append(_frame)
                   count += 1
                   start_track_time = time.perf_counter()
