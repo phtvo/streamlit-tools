@@ -23,7 +23,7 @@ def display():
   st.sidebar.header("Model Setting")
   model_url = st.sidebar.text_input(
       "Model URL", 
-      value="https://clarifai.com/phatvo/image-model-pythonic/models/sam2_1-hiera-large/ver/ffef18bc83714e5e9050e78d94c632e6")
+      value="https://clarifai.com/meta/segment-anything/models/sam2_1-hiera-base-plus")
   base_url = st.sidebar.text_input("Base URL", value=os.environ.get("CLARIFAI_API_BASE","https://api.clarifai.com"))
   if base_url:
     os.environ["CLARIFAI_API_BASE"] = base_url
@@ -42,7 +42,7 @@ def display():
   st.subheader(f"Model ID: `{str(model.id)}`")
   with st.sidebar.expander("`Runner selector`", expanded=True):
     user_id = st.text_input("user_id", model.user_app_id.user_id)
-    deployment_id = st.text_input("deployment_id", os.environ.get("CLARIFAI_DEPLOYMENT_ID") or "sam2-large")
+    deployment_id = st.text_input("deployment_id", os.environ.get("CLARIFAI_DEPLOYMENT_ID") )
     compute_cluster_id = st.text_input(
         "compute_cluster_id", os.environ.get("CLARIFAI_COMPUTE_CLUSTER_ID"))
     nodepool_id = st.text_input(
@@ -247,7 +247,7 @@ def display():
           current_objects = get_obj_by_current_frame()
           for obj in current_objects:
               with st.spinner("Getting mask for current frame"):
-                  masks = model.create_mask(
+                  masks = model.predict(
                       image=dt.Image.from_pil(Image.fromarray(frame.copy())),
                       dict_inputs=dict(
                           points=obj["points"],
@@ -270,8 +270,8 @@ def display():
               list_input_dict.append({k: v for k, v in each.items() if k != "mask"})
           cl_video = dt.Video(bytes=uploaded_file.read())
           with st.expander("View request"):
-            st.markdown(f"```model.track(video={cl_video.__repr__()}, list_dict_inputs={list_input_dict}))```")
-          tracked_frames: Iterator[dt.Frame] = model.track(video=cl_video, list_dict_inputs=list_input_dict)
+            st.markdown(f"```model.generate(video={cl_video.__repr__()}, list_dict_inputs={list_input_dict}))```")
+          tracked_frames: Iterator[dt.Frame] = model.generate(video=cl_video, list_dict_inputs=list_input_dict)
           st.session_state["tracked_frames"] = []
           count = 0
           view_image = st.empty()
