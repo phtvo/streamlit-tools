@@ -206,15 +206,17 @@ def display():
           if st.session_state.objects:
               last_obj = st.session_state.objects[-1]
               #print(last_obj)
+              x = round(x/image_width, 3)
+              y = round(y/image_height, 3)
               if last_obj["frame_idx"] == st.session_state.frame_idx and ([x, y] not in last_obj["points"] ):
                   if len(st.session_state.objects) > 1:
                       second_last_obj = st.session_state.objects[-2]
                       if [x, y] not in second_last_obj["points"]:
-                          last_obj["points"].append([x / image_width, y / image_height])
+                          last_obj["points"].append([x, y])
                           last_obj["labels"].append(1 if st.session_state.current_mode == "positive" else 0)
                           last_obj["frame_idx"] = st.session_state.frame_idx
                   else:
-                      last_obj["points"].append([x / image_width, y / image_height])
+                      last_obj["points"].append([x, y])
                       last_obj["labels"].append(1 if st.session_state.current_mode == "positive" else 0)
                       last_obj["frame_idx"] = st.session_state.frame_idx
 
@@ -248,6 +250,7 @@ def display():
           current_objects = get_obj_by_current_frame()
           for obj in current_objects:
               with st.spinner("Getting mask for current frame"):
+                  #print(model)
                   masks = model.predict(
                       image=dt.Image.from_pil(Image.fromarray(frame.copy())),
                       dict_inputs=dict(
