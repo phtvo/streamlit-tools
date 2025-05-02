@@ -141,6 +141,7 @@ def display():
               st.session_state.frame_idx += 1
       # Always get updated frame after idx change
       frame = st.session_state.video_frames[st.session_state.frame_idx]
+      image_height, image_width = frame.shape[:2]
       st.subheader(f"🖼️ Frame {st.session_state.frame_idx+1}/{num_frames}")
 
   # ------------------- CANVAS DRAWING --------------------------
@@ -209,11 +210,11 @@ def display():
                   if len(st.session_state.objects) > 1:
                       second_last_obj = st.session_state.objects[-2]
                       if [x, y] not in second_last_obj["points"]:
-                          last_obj["points"].append([x, y])
+                          last_obj["points"].append([x / image_width, y / image_height])
                           last_obj["labels"].append(1 if st.session_state.current_mode == "positive" else 0)
                           last_obj["frame_idx"] = st.session_state.frame_idx
                   else:
-                      last_obj["points"].append([x, y])
+                      last_obj["points"].append([x / image_width, y / image_height])
                       last_obj["labels"].append(1 if st.session_state.current_mode == "positive" else 0)
                       last_obj["frame_idx"] = st.session_state.frame_idx
 
