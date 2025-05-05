@@ -1,9 +1,10 @@
+from collections import defaultdict
 import io
 import json
 import time
 import tempfile
 import os
-from typing import Iterator
+from typing import Iterator, List
 
 import streamlit as st
 import cv2
@@ -16,6 +17,44 @@ from clarifai.runners.utils import data_types as dt
 
 st.set_page_config(layout="wide")
 st.title("🎥 SAM2 Object Tracking Demo")
+
+def object_to_region(obj)-> List[dt.Region]:
+  points = obj.get("points", [])
+  labels = obj.get("labels", [])
+  regions = []
+  for ((x, y), lb) in zip(points, labels):
+    lb = int(lb)
+    reg = dt.Region(concepts=[dt.Concept(name=str(lb), value=float(lb))])
+    reg.proto.region_info.point.col = x
+    reg.proto.region_info.point.row = y
+    
+    regions.append(reg)
+    
+  return regions
+
+
+def objects_to_frames(objs):
+  frames_ = defaultdict(lambda : [])
+  for obj in objs:
+    points = obj.get("points", [])
+    labels = obj.get("labels", [])
+    frame_idx = obj.get("frame_idx")
+    obj_id = obj.get("obj_id")
+    regions = []
+    for ((x, y), lb) in zip(points, labels):
+      lb = int(lb)
+      reg = dt.Region(concepts=[dt.Concept(name=str(lb), value=float(lb))])
+      reg.proto.region_info.point.col = x
+      reg.proto.region_info.point.row = y
+      reg.proto.track_id = str(obj_id)
+      regions.append(reg)
+    frames_[frame_idx].append(regions)
+  frames = []
+  for (idx, fs) in frames_.items():
+    frame = dt.Frame(regions=fs)
+    frame.proto.frame_info.index = idx
+    frames.append(frames)
+  return frames
 
 def display():
   # -------------------- Side bar
@@ -53,6 +92,7 @@ def display():
         deployment_id=deployment_id,
         user_id=user_id,
     )
+    print(model)
 
   # ------------------- SESSION STATE INIT ----------------------
   if "objects" not in st.session_state:
@@ -98,17 +138,17 @@ def display():
       st.session_state.frame_idx = 0
 
   if st.button("Reset everything", type="primary"):
-      st.session_state.objects = []
-      st.session_state.frame_idx = 0
-      st.session_state.rendered_frame_idx = 0
-      st.session_state.video_frames = []
-      st.session_state.obj_id = 0
-      st.session_state.current_mode = "positive"
-      st.session_state.current_video = None
-      st.session_state.obj_to_color = {}
-      st.session_state.canvas_img = None
-      st.session_state.fps = 0
-      st.session_state.pop("tracked_frames")
+      st.session_state.setdefault("objects", [])
+      st.session_state.setdefault("frame_idx", 0)
+      st.session_state.setdefault("rendered_frame_idx", 0)
+      st.session_state.setdefault("video_frames", [])
+      st.session_state.setdefault("obj_id", 0)
+      st.session_state.setdefault("current_mode", "positive")
+      st.session_state.setdefault("current_video", None)
+      st.session_state.setdefault("obj_to_color", {})
+      st.session_state.setdefault("canvas_img", None)
+      st.session_state.setdefault("fps", 0)
+      st.session_state.pop("tracked_frames", None)
       uploaded_file = None
   
   # ------------------- VIDEO CONTROLS --------------------------
@@ -250,7 +290,12 @@ def display():
           current_objects = get_obj_by_current_frame()
           for obj in current_objects:
               with st.spinner("Getting mask for current frame"):
-                  #print(model)
+                  #print(object_to_region(obj)[0].proto)
+                  # masks = model.predict(
+                  #     image=dt.Image.from_pil(Image.fromarray(frame.copy())),
+                  #     regions=object_to_region(obj),
+                  #     multimask_output=False
+                  # )
                   masks = model.predict(
                       image=dt.Image.from_pil(Image.fromarray(frame.copy())),
                       dict_inputs=dict(
@@ -275,7 +320,10 @@ def display():
           cl_video = dt.Video(bytes=uploaded_file.read())
           with st.expander("View request"):
             st.markdown(f"```model.generate(video={cl_video.__repr__()}, list_dict_inputs={list_input_dict}))```")
-          tracked_frames: Iterator[dt.Frame] = model.generate(video=cl_video, list_dict_inputs=list_input_dict)
+          
+          #tracked_frames: Iterator[dt.Frame] = model.generate(video=cl_video, list_dict_inputs=list_input_dict)
+          tracked_frames: Iterator[dt.Frame] = model.generate(video=cl_video, frames=objects_to_frames(list_input_dict))
+          
           st.session_state["tracked_frames"] = []
           count = 0
           view_image = st.empty()
