@@ -48,12 +48,13 @@ def objects_to_frames(objs):
       reg.proto.region_info.point.row = y
       reg.proto.track_id = str(obj_id)
       regions.append(reg)
-    frames_[frame_idx].append(regions)
+    frames_[frame_idx] += regions
   frames = []
   for (idx, fs) in frames_.items():
     frame = dt.Frame(regions=fs)
     frame.proto.frame_info.index = idx
     frames.append(frames)
+  print(frames)
   return frames
 
 def display():
@@ -92,7 +93,7 @@ def display():
         deployment_id=deployment_id,
         user_id=user_id,
     )
-    print(model)
+    #print(model)
 
   # ------------------- SESSION STATE INIT ----------------------
   if "objects" not in st.session_state:
@@ -290,20 +291,20 @@ def display():
           current_objects = get_obj_by_current_frame()
           for obj in current_objects:
               with st.spinner("Getting mask for current frame"):
-                  #print(object_to_region(obj)[0].proto)
-                  # masks = model.predict(
-                  #     image=dt.Image.from_pil(Image.fromarray(frame.copy())),
-                  #     regions=object_to_region(obj),
-                  #     multimask_output=False
-                  # )
+                  print(object_to_region(obj)[0].proto)
                   masks = model.predict(
                       image=dt.Image.from_pil(Image.fromarray(frame.copy())),
-                      dict_inputs=dict(
-                          points=obj["points"],
-                          labels=obj["labels"]
-                          ),
+                      regions=object_to_region(obj),
                       multimask_output=False
                   )
+                  # masks = model.predict(
+                  #     image=dt.Image.from_pil(Image.fromarray(frame.copy())),
+                  #     dict_inputs=dict(
+                  #         points=obj["points"],
+                  #         labels=obj["labels"]
+                  #         ),
+                  #     multimask_output=False
+                  # )
               mask_bytes = masks[0].proto.region_info.mask.image.base64
               mask = Image.open(io.BytesIO(mask_bytes))
               mask = np.asarray(mask, dtype=np.uint8)
@@ -321,8 +322,8 @@ def display():
           with st.expander("View request"):
             st.markdown(f"```model.generate(video={cl_video.__repr__()}, list_dict_inputs={list_input_dict}))```")
           
-          #tracked_frames: Iterator[dt.Frame] = model.generate(video=cl_video, list_dict_inputs=list_input_dict)
-          tracked_frames: Iterator[dt.Frame] = model.generate(video=cl_video, frames=objects_to_frames(list_input_dict))
+          tracked_frames: Iterator[dt.Frame] = model.generate(video=cl_video, list_dict_inputs=list_input_dict)
+          #tracked_frames: Iterator[dt.Frame] = model.generate(video=cl_video, frames=objects_to_frames(list_input_dict))
           
           st.session_state["tracked_frames"] = []
           count = 0
