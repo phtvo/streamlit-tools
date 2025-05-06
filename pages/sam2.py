@@ -17,7 +17,12 @@ from clarifai.runners.utils import data_types as dt
 
 st.set_page_config(layout="wide")
 st.title("🎥 SAM2 Object Tracking Demo")
-
+st_server_base_url = st._config.get_option("server.baseUrlPath")
+print("server.baseUrlPath", st_server_base_url)
+if st_server_base_url and not st_server_base_url.endswith("/"):
+  st._config.set_option("server.baseUrlPath", st_server_base_url + "/")
+  print("new", st._config.get_option("server.baseUrlPath"))
+  
 def object_to_region(obj)-> List[dt.Region]:
   points = obj.get("points", [])
   labels = obj.get("labels", [])
