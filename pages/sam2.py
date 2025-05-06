@@ -333,7 +333,6 @@ def display():
               for trk_frame in tracked_frames:
                   _frame = st.session_state.video_frames[count].copy()
                   this_track_time = time.perf_counter() - start_track_time
-                  total_track_time.append(this_track_time)
                   for reg in trk_frame.regions:
                       mask_bytes = reg.proto.region_info.mask.image.base64
                       mask = Image.open(io.BytesIO(mask_bytes))
@@ -342,8 +341,13 @@ def display():
                       color = st.session_state.obj_to_color[track_id] 
                       #for obj in st.session_state.objects:
                       _frame = render_mask(_frame, mask, color, 0.7)
-                  st.session_state.fps = round((count + 1) / sum(total_track_time), 3)
-                  view_image.image(_frame, caption=f"Tracked Frame {count+1}. FPS = {st.session_state.fps} f/s. Time = {round(sum(total_track_time), 3)} sec", channels="RGB")
+                  
+                  total_track_time.append(this_track_time)
+                  first_frame_time = total_track_time[0]
+                  track_time = sum(total_track_time[1:])
+                  st.session_state.fps = round((count) / track_time, 3) if track_time else -1
+                  total_fps = round((count + 1)  / sum(total_track_time), 3)
+                  view_image.image(_frame, caption=f"Tracked Frame {count+1}. Total FPS = {total_fps}. Track FPS = {st.session_state.fps}. \nPreprocess Time = {round(first_frame_time, 3)} sec. Track Time = {round(track_time, 3)} sec", channels="RGB")
                   st.session_state["tracked_frames"].append(_frame)
                   count += 1
                   start_track_time = time.perf_counter()
