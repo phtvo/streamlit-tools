@@ -52,9 +52,8 @@ def objects_to_frames(objs):
   frames = []
   for (idx, fs) in frames_.items():
     frame = dt.Frame(regions=fs)
-    frame.proto.frame_info.index = idx
-    frames.append(frames)
-  print(frames)
+    frame.proto.frame_info.index = int(idx)
+    frames.append(frame)
   return frames
 
 def display():
@@ -139,16 +138,17 @@ def display():
       st.session_state.frame_idx = 0
 
   if st.button("Reset everything", type="primary"):
-      st.session_state.setdefault("objects", [])
-      st.session_state.setdefault("frame_idx", 0)
-      st.session_state.setdefault("rendered_frame_idx", 0)
-      st.session_state.setdefault("video_frames", [])
-      st.session_state.setdefault("obj_id", 0)
-      st.session_state.setdefault("current_mode", "positive")
-      st.session_state.setdefault("current_video", None)
-      st.session_state.setdefault("obj_to_color", {})
-      st.session_state.setdefault("canvas_img", None)
-      st.session_state.setdefault("fps", 0)
+      if "objects" in st.session_state:
+        st.session_state.objects = []
+        st.session_state.frame_idx = 0
+        st.session_state.rendered_frame_idx = 0
+        st.session_state.video_frames = []
+        st.session_state.obj_id = 0
+        st.session_state.current_mode = "positive"
+        st.session_state.current_video = None
+        st.session_state.obj_to_color = {}
+        st.session_state.canvas_img = None
+        st.session_state.fps = 0
       st.session_state.pop("tracked_frames", None)
       uploaded_file = None
   
@@ -291,7 +291,6 @@ def display():
           current_objects = get_obj_by_current_frame()
           for obj in current_objects:
               with st.spinner("Getting mask for current frame"):
-                  print(object_to_region(obj)[0].proto)
                   masks = model.predict(
                       image=dt.Image.from_pil(Image.fromarray(frame.copy())),
                       regions=object_to_region(obj),
