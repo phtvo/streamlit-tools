@@ -20,12 +20,12 @@ from clarifai.runners.utils import data_types as dt
 
 st_server_base_url = st._config.get_option("server.baseUrlPath")
 
-st.write(st_server_base_url)
+#st.write(st_server_base_url)
 print("server.baseUrlPath", st_server_base_url)
 if st_server_base_url and not st_server_base_url.startswith("/"):
   st._config.set_option("server.baseUrlPath", "/" + st_server_base_url)
   print("new", st._config.get_option("server.baseUrlPath"))
-  st.write(f"change to {st._config.get_option('server.baseUrlPath')}")
+  #st.write(f"change to {st._config.get_option('server.baseUrlPath')}")
   
 from streamlit_drawable_canvas import st_canvas
   
