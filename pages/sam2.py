@@ -10,23 +10,24 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
-st_server_base_url = st._config.get_option("server.baseUrlPath")
-
-st.write(st_server_base_url)
-print("server.baseUrlPath", st_server_base_url)
-if st_server_base_url and not st_server_base_url.endswith("/"):
-  st._config.set_option("server.baseUrlPath", st_server_base_url + "/")
-  print("new", st._config.get_option("server.baseUrlPath"))
-  st.write(f"change to {st._config.get_option('server.baseUrlPath')}")
+st.set_page_config(layout="wide")
+st.title("🎥 SAM2 Object Tracking Demo")
 
 
-from streamlit_drawable_canvas import st_canvas
 
 from clarifai.client import Model
 from clarifai.runners.utils import data_types as dt
 
-st.set_page_config(layout="wide")
-st.title("🎥 SAM2 Object Tracking Demo")
+st_server_base_url = st._config.get_option("server.baseUrlPath")
+
+st.write(st_server_base_url)
+print("server.baseUrlPath", st_server_base_url)
+if st_server_base_url and not st_server_base_url.startswith("/"):
+  st._config.set_option("server.baseUrlPath", "/" + st_server_base_url)
+  print("new", st._config.get_option("server.baseUrlPath"))
+  st.write(f"change to {st._config.get_option('server.baseUrlPath')}")
+  
+from streamlit_drawable_canvas import st_canvas
   
 def object_to_region(obj)-> List[dt.Region]:
   points = obj.get("points", [])
