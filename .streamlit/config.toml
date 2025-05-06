@@ -1,5 +1,12 @@
 [theme]
 base="light"
 
+[client]
+showErrorDetails = false
+showSidebarNavigation = false
+
 [server]
-enableXsrfProtection=false
+# for uploading file
+enableXsrfProtection = false
+enableCORS = false
+maxMessageSize = 1000

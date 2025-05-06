@@ -287,7 +287,7 @@ def display():
           #    st.text(f"Labels: {obj['labels']}")
 
       # Create Mask API call
-      if st.button("Create Mask"):
+      if st.button("Create Mask", type="primary"):
           current_objects = get_obj_by_current_frame()
           for obj in current_objects:
               with st.spinner("Getting mask for current frame"):
@@ -313,7 +313,7 @@ def display():
                   
 
       # Submit for full tracking
-      if st.button("Submit to Track") and uploaded_file:
+      if st.button("Submit to Track", type="primary") and uploaded_file:
           list_input_dict = []
           for each in st.session_state.objects:
               list_input_dict.append({k: v for k, v in each.items() if k != "mask"})
@@ -328,6 +328,7 @@ def display():
           count = 0
           view_image = st.empty()
           start_track_time = time.perf_counter()
+          _time = time.perf_counter()
           total_track_time = []
           with st.spinner("Tracking.."):
               for trk_frame in tracked_frames:
@@ -345,13 +346,14 @@ def display():
                   total_track_time.append(this_track_time)
                   first_frame_time = total_track_time[0]
                   track_time = sum(total_track_time[1:])
-                  st.session_state.fps = round((count) / track_time, 3) if track_time else -1
-                  total_fps = round((count + 1)  / sum(total_track_time), 3)
+                  st.session_state.fps = round((len(total_track_time) - 1) / track_time, 3) if track_time else -1
+                  total_fps = round(len(total_track_time)  / sum(total_track_time), 3)
                   view_image.image(_frame, caption=f"Tracked Frame {count+1}. Total FPS = {total_fps}. Track FPS = {st.session_state.fps}. \nPreprocess Time = {round(first_frame_time, 3)} sec. Track Time = {round(track_time, 3)} sec", channels="RGB")
                   st.session_state["tracked_frames"].append(_frame)
                   count += 1
                   start_track_time = time.perf_counter()
               #view_image.markdown("Done")
+          _time = time.perf_counter() - _time
       
   if st.session_state.get("tracked_frames"):
       st.subheader("View tracked objects")
